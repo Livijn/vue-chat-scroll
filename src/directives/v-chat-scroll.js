@@ -7,14 +7,8 @@
 
 const scrollToBottom = el => {
   setTimeout(() => {
-    if (typeof el.scroll === "function") {
-      el.scroll({
-        top: el.scrollHeight,
-        behavior: 'instant'
-      });
-    } else {
-      el.scrollTop = el.scrollHeight;
-    }
+    console.log(el.scrollTop, el.scrollHeight);
+    el.scrollTop = el.scrollHeight;
   }, 1);
 };
 
@@ -42,7 +36,7 @@ const vChatScroll = {
       if (scrolled) return;
 
       scrollToBottom(el);
-    })).observe(el, { childList: true, subtree: false });
+    })).observe(el, { childList: true, subtree: true });
 
     (new ResizeObserver(e => {
       if (scrolled) return;
