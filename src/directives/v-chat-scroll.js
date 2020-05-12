@@ -12,32 +12,39 @@ const scrollToBottom = el => {
 };
 
 const vChatScroll = {
-  bind: (el, binding) => {
+  bind: (component, binding) => {
+    let el = component.$el;
     let config = binding.value || {};
     let scrolled = false;
 
+    console.log(component);
+
     el.addEventListener('scroll', e => {
-      const hadScrolledBeforeEvent = scrolled;
-      scrolled = el.scrollTop + el.clientHeight + 1 < el.scrollHeight - (config.threshold || 20);
+      setTimeout(() => {
+        const hadScrolledBeforeEvent = scrolled;
+        scrolled = el.scrollTop + el.clientHeight + 1 < el.scrollHeight - (config.threshold || 20);
 
-      if (scrolled && el.scrollTop === 0) {
-        el.dispatchEvent(new Event("v-chat-scroll-top-reached"));
-      }
+        console.log("onscroll", hadScrolledBeforeEvent, scrolled);
 
-      if (! hadScrolledBeforeEvent && scrolled) {
-        el.dispatchEvent(new CustomEvent("v-chat-scroll-scrolled-up", { detail: true }));
-      } else if (hadScrolledBeforeEvent && ! scrolled) {
-        el.dispatchEvent(new CustomEvent("v-chat-scroll-scrolled-up", { detail: false }));
-      }
+        if (! hadScrolledBeforeEvent && scrolled) {
+          el.dispatchEvent(new CustomEvent("v-chat-scroll-scrolled-up", { detail: true }));
+        } else if (hadScrolledBeforeEvent && ! scrolled) {
+          el.dispatchEvent(new CustomEvent("v-chat-scroll-scrolled-up", { detail: false }));
+        }
+      }, 1);
     });
 
     (new MutationObserver(e => {
+      console.log("MutationObserver", scrolled);
+      // component.ps.update();
       if (scrolled) return;
 
       scrollToBottom(el);
     })).observe(el, { childList: true, subtree: true });
 
     (new ResizeObserver(e => {
+      console.log("ResizeObserver", scrolled);
+      // component.ps.update();
       if (scrolled) return;
 
       scrollToBottom(el);
@@ -45,7 +52,7 @@ const vChatScroll = {
   },
   inserted: (el, binding) => {
     const config = binding.value || {};
-    scrollToBottom(el, config.notSmoothOnInit ? false : config.smooth);
+    scrollToBottom(el);
   },
 };
 
