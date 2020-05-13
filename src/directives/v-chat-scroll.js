@@ -1,59 +1,44 @@
-/**
-* @name VueJS vChatScroll (vue-chat-scroll)
-* @description Monitors an element and scrolls to the bottom if a new child is added
-* @author Theodore Messinezis <theo@theomessin.com>
-* @file v-chat-scroll  directive definition
-*/
-
-const scrollToBottom = el => {
-  setTimeout(() => {
-    el.scrollTop = el.scrollHeight;
-  }, 1);
-};
+let el = null;
+let hasScrolled = false;
+let threshold = 100;
 
 const vChatScroll = {
-  bind: (component, binding) => {
-    let el = component.$el;
-    let config = binding.value || {};
-    let scrolled = false;
+  bind: (element, onScrolledUp) => {
+    el = element;
 
-    console.log(component);
+    setTimeout(scrollToBottom, 100);
 
     el.addEventListener('scroll', e => {
-      setTimeout(() => {
-        const hadScrolledBeforeEvent = scrolled;
-        scrolled = el.scrollTop + el.clientHeight + 1 < el.scrollHeight - (config.threshold || 20);
+      const hadScrolledBeforeEvent = hasScrolled;
+      hasScrolled = el.scrollTop + el.clientHeight < el.scrollHeight - threshold;
 
-        console.log("onscroll", hadScrolledBeforeEvent, scrolled);
-
-        if (! hadScrolledBeforeEvent && scrolled) {
-          el.dispatchEvent(new CustomEvent("v-chat-scroll-scrolled-up", { detail: true }));
-        } else if (hadScrolledBeforeEvent && ! scrolled) {
-          el.dispatchEvent(new CustomEvent("v-chat-scroll-scrolled-up", { detail: false }));
-        }
-      }, 1);
+      if (! hadScrolledBeforeEvent && hasScrolled) {
+        onScrolledUp(true)
+      } else if (hadScrolledBeforeEvent && ! hasScrolled) {
+        onScrolledUp(false)
+      }
     });
 
-    (new MutationObserver(e => {
-      console.log("MutationObserver", scrolled);
-      // component.ps.update();
-      if (scrolled) return;
-
-      scrollToBottom(el);
-    })).observe(el, { childList: true, subtree: true });
+    el.addEventListener('mouseup', e => {
+      if (e.target.tagName !== 'SPAN') {
+        App.$bus.emit('CreateChatMessage/focus');
+      }
+    });
 
     (new ResizeObserver(e => {
-      console.log("ResizeObserver", scrolled);
-      // component.ps.update();
-      if (scrolled) return;
-
-      scrollToBottom(el);
+      scrollToBottom();
     })).observe(el);
+
+    (new MutationObserver(e => {
+      scrollToBottom();
+    })).observe(el, { childList: true, subtree: true });
   },
-  inserted: (el, binding) => {
-    const config = binding.value || {};
-    scrollToBottom(el);
-  },
+};
+
+const scrollToBottom = (force = false) => {
+  if (hasScrolled && ! force) return;
+
+  el.scrollTop = el.scrollHeight - el.clientHeight;
 };
 
 export default vChatScroll;
